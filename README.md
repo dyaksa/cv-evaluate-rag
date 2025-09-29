@@ -20,7 +20,6 @@ The system follows a **Clean Architecture** pattern with clear separation of con
 
 ```
 ├── app/                    # Application layer (Controllers)
-├── bootstrap/              # Application initialization
 ├── core/                   # Configuration and settings
 ├── usecases/              # Business logic layer
 ├── repositories/          # Data access layer
