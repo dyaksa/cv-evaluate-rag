@@ -54,3 +54,5 @@ python-docx
 backoff
 flask-jwt-extended
 bcrypt
+pytest
+pytest-mock
