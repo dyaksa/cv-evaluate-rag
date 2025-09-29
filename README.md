@@ -76,6 +76,7 @@ The system follows a **Clean Architecture** pattern with clear separation of con
 - Redis server
 - Google AI API key
 - Docker
+- Docker Compose
 - Virtual environment (recommended)
 
 ## 🛠️ Installation & Setup
