@@ -12,16 +12,8 @@ class Settings(BaseSettings):
     DEBUG: bool
 
     GOOGLE_API_KEY: str
-    # DB_HOST: str
-    # DB_PORT: int
-    # DB_USER: str
-    # DB_PASSWORD: str
-    # DB_NAME: str
 
     DATABASE_URL: str = "sqlite:///./storage/app.db"
-
-    LANGSMITH_API_KEY: str
-    LANGSMITH_TRACING: bool = False
 
     GOOGLE_LLM_MODEL: str = "gemini-2.5-flash-lite"
     GOOGLE_EMBEDDING_MODEL: str = "models/text-embedding-004"
