@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  evaluate_resume_service:
+    container_name: "app-evaluate-resume"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    environment:
+      ARGS_APP_DIR: "."
+      ARGS_FLASK_NAME: "app:app"
+      FLASK_ENV: "development"
+      FLASK_DEBUG: 1
+      GUNICORN_WORKER: 3
+      GUNICORN_TIMEOUT: 30
+      REDIS_HOST: "redis-evaluate"
+    depends_on:
+      - redis-evaluate
+    command: flask run --host=0.0.0.0 --port=8080 --debugger --reload
+
+  worker:
+    container_name: "worker-evaluate"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-u", "worker.py"]
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: "redis-evaluate"
+    depends_on:
+      - redis-evaluate
+
+  redis-evaluate:
+    image: "redis:latest"
+    container_name: "redis-evaluate"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  redis_data: {}
+  app_data: {}
