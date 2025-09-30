@@ -2,6 +2,7 @@ from re import sub
 from langchain_google_genai import ChatGoogleGenerativeAI
 from core.config import settings
 from google.api_core.exceptions import ResourceExhausted, DeadlineExceeded
+from langchain_core.prompts import PromptTemplate
 import backoff
 import json
 
@@ -39,13 +40,13 @@ JSON format:
 
 @backoff.on_exception(backoff.expo, (ResourceExhausted, DeadlineExceeded), max_tries=3) 
 def llm_score(job_ctx: str, rubric_ctx: str, resume_text: str):
-    prompt = EVAL_PROMPT.format(job_ctx=job_ctx, rubric_ctx=rubric_ctx, resume_text=resume_text)
+    template = PromptTemplate.from_template(EVAL_PROMPT)
+    prompt = template.format(job_ctx=job_ctx, rubric_ctx=rubric_ctx, resume_text=resume_text)
     llm = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
     out = llm.invoke(prompt).content
     cleanup = sub(r"```[a-zA-Z]*", "", out).strip()  # Remove any code block markers
     try:
         data = json.loads(cleanup)
     except json.JSONDecodeError as e:
-        raise Exception(f"Invalid JSON from model: {e}\nRaw: {out[:400]}")
-
+        raise Exception(f"Invalid JSON from model: {e}\nRaw: {out[:400]}")  
     return data
