@@ -1,7 +1,11 @@
 from rag.chains import cv_extract
 from rag.pdf_reader import extract_text_from_pdf
 from repositories import embedding_repository, upload_repository, evaluation_repository
-from rag.llm import llm_score
+from langchain.output_parsers.json import SimpleJsonOutputParser
+from langchain.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda
+from rag.llm import llm_score, EVAL_PROMPT
+from langchain_google_genai import ChatGoogleGenerativeAI
 from internal.redis import RedisClient
 from datetime import datetime
 from core.config import settings
@@ -100,12 +104,24 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
 
         job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
 
-        llm_result = llm_score(job_ctx=job_context, rubric_ctx=rubric_context, resume_text=resume_summary)
+        prompt_template = ChatPromptTemplate.from_template(EVAL_PROMPT)
+        model = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
+        evaluation_chain = (
+            RunnableLambda(lambda x: prompt_template.format_prompt(**x).to_string())  
+            | model 
+            | SimpleJsonOutputParser()
+        )
 
-        cv_match_rate = llm_result.get("cv_match_rate", 0.0)
-        cv_feedback = llm_result.get("cv_feedback", "")
-        project_score = llm_result.get("project_score", 0.0)
-        overall_summary = llm_result.get("overall_summary", "")
+        llm_result = evaluation_chain.invoke({
+            "job_ctx": embedding_repo.top_k_similiar(resume_summary, top_k=4, where_kind="job"),
+            "rubric_ctx": embedding_repo.top_k_similiar(resume_summary, top_k=4, where_kind="rubric"),
+            "resume_text": resume_summary
+        })
+
+        cv_match_rate = float(llm_result.get("cv_match_rate", 0.0))
+        cv_feedback = str(llm_result.get("cv_feedback", ""))
+        project_score = float(llm_result.get("project_score", 0.0))
+        overall_summary = str(llm_result.get("overall_summary", ""))
 
         evaluation_repo = evaluation_repository.EvaluationRepository(SessionLocal())
         evaluation = evaluation_repo.update_status(evaluate_id, EvaluationStatus.processing)
