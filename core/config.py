@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     REDIS_STREAM_KEY: str = "ingest_stream"
     REDIS_CONSUMER_GROUP: str = "ingest_group"
 
-    UPLOAD_FOLDER: str = "storage/files/"
+    UPLOAD_FOLDER: str = "./storage/files"
     JWT_SECRET_KEY: str = "secret-key"
 
     model_config = SettingsConfigDict(

@@ -1,7 +1,11 @@
-from rag.chains import cv_extract
+from rag.chains import cv_extract, rubric_extract_from_job
 from rag.pdf_reader import extract_text_from_pdf
 from repositories import embedding_repository, upload_repository, evaluation_repository
-from rag.llm import llm_score
+from langchain_core.runnables import RunnableLambda
+from langchain_core.prompts import PromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.output_parsers.json import SimpleJsonOutputParser
+from rag.llm import llm_score, EVAL_PROMPT
 from internal.redis import RedisClient
 from datetime import datetime
 from core.config import settings
@@ -14,7 +18,7 @@ import os
 redis_client = RedisClient()
 os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
-def upload(title: str, stream: bytes, job_context: str, rubric_context: str) -> str:
+def upload(title: str, stream: bytes, job_context: str) -> str:
     filename = title.replace(' ', '_') + datetime.now().strftime("-%Y%m%d-%H%M%S") + '.pdf'
 
     save_path = os.path.join(settings.UPLOAD_FOLDER, filename)
@@ -26,7 +30,7 @@ def upload(title: str, stream: bytes, job_context: str, rubric_context: str) -> 
         title=title,
         file_path=save_path,
         job_context=job_context,
-        rubric_context=rubric_context
+        rubric_context=rubric_extract_from_job(job_context)
     )
 
     evaluation_repo = evaluation_repository.EvaluationRepository(SessionLocal())
@@ -87,7 +91,7 @@ def evaluate_async_cv(message_id: str, payload: dict):
         return False
     
 
-def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, rubric_context: str):
+def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, rubric_context: str = ""):
     try:
         embedding_repo = embedding_repository.EmbeddingRepository()
 
@@ -98,14 +102,34 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="job", text=job_context)
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="rubric", text=rubric_context)
 
-        job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
+        prompt_template = PromptTemplate.from_template(EVAL_PROMPT)
 
-        llm_result = llm_score(job_ctx=job_context, rubric_ctx=rubric_context, resume_text=resume_summary)
+        model = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
+        evaluation_chain = (
+            RunnableLambda(lambda x: prompt_template.format_prompt(**x).to_string())  
+            | model 
+            | SimpleJsonOutputParser()
+        )
+
+        llm_result = evaluation_chain.invoke({
+            "job_ctx": embedding_repo.top_k_similiar(resume_summary, top_k=4, where_kind="job"),
+            "rubric_ctx": embedding_repo.top_k_similiar(resume_summary, top_k=4, where_kind="rubric"),
+            "resume_text": resume_summary
+        })
 
         cv_match_rate = llm_result.get("cv_match_rate", 0.0)
         cv_feedback = llm_result.get("cv_feedback", "")
         project_score = llm_result.get("project_score", 0.0)
         overall_summary = llm_result.get("overall_summary", "")
+
+        # job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
+
+        # llm_result = llm_score(job_ctx=job_context, rubric_ctx=rubric_context, resume_text=resume_summary)
+
+        # cv_match_rate = llm_result.get("cv_match_rate", 0.0)
+        # cv_feedback = llm_result.get("cv_feedback", "")
+        # project_score = llm_result.get("project_score", 0.0)
+        # overall_summary = llm_result.get("overall_summary", "")
 
         evaluation_repo = evaluation_repository.EvaluationRepository(SessionLocal())
         evaluation = evaluation_repo.update_status(evaluate_id, EvaluationStatus.processing)

@@ -29,6 +29,19 @@ def cv_extract(cv_text: str) -> str:
     
     return out.content
 
+def rubric_extract_from_job(job_text: str) -> str:
+    llm = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
+    prompt = f"""You are an expert HR-tech evaluator. Extract the assessment rubric from the following Job Description.
+    Focus on skills, experience, tools, and project expectations. Return concise text suitable for evaluation."""
+    msgs = [SystemMessage(content=prompt),
+            HumanMessage(content=job_text)]
+    try:
+        out = llm.invoke(msgs)
+    except Exception as e:
+        raise Exception(f"Invalid error from model: {e}\n") 
+    
+    return out.content
+
 def cv_compare(profile_json: dict, job_ctx: str) -> dict:
     llm = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
     sys = f"{job_ctx}\n\n"  # inject JOB context

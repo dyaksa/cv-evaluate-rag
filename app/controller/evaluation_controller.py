@@ -9,10 +9,10 @@ bp = Blueprint('evaluation', __name__)
 def upload_endpoint():
     title = request.form.get('title')
     job_context = request.form.get('job_context')
-    rubric_context = request.form.get('rubric_context')
+    # rubric_context = request.form.get('rubric_context')
 
-    if not title or not job_context or not rubric_context:
-        return jsonify({"error": "Missing form fields"}), 400
+    # if not title or not job_context or not rubric_context:
+    #     return jsonify({"error": "Missing form fields"}), 400
 
     if 'file' not in request.files:
         return jsonify({"error": "Missing form field 'file'"}), 400
@@ -22,7 +22,7 @@ def upload_endpoint():
         return jsonify({"error": "No file provided or empty filename"}), 400
 
     try:
-        upload_id = upload(title, f.stream, job_context, rubric_context)
+        upload_id = upload(title, f.stream, job_context)
         return jsonify({"status": "uploaded", "id": upload_id}), 201
     except Exception as e:
         return jsonify({"error": "Failed to upload file", "detail": str(e)}), 500
