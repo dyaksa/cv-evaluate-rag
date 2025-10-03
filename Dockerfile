@@ -45,7 +45,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 COPY ${ARGS_APP_DIR}/ ${ARGS_APP_DIR}/
 
 # Expose application port
-EXPOSE 8000
+EXPOSE 8001
 
 # Run the application
 CMD ["sh", "-c", "gunicorn ${FLASK_APP} --worker-class gevent --workers ${GUNICORN_WORKER} --preload --bind 0.0.0.0:8080 --pythonpath='${PYTHONPATH}' --chdir ${PYTHONPATH} --log-level DEBUG"]
