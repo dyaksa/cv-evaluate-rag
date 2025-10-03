@@ -19,6 +19,7 @@ services:
       GUNICORN_WORKER: 3
       GUNICORN_TIMEOUT: 30
       APP_REDIS_HOST: "redis-evaluate"
+      APP_GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
     depends_on:
       - redis-evaluate
     command: flask run --host=0.0.0.0 --port=8001 --debugger --reload
