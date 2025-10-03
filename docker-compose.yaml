@@ -18,7 +18,7 @@ services:
       FLASK_DEBUG: 1
       GUNICORN_WORKER: 3
       GUNICORN_TIMEOUT: 30
-      APP_REDIS_HOST: "redis-evaluate"
+      REDIS_HOST: "redis-evaluate"
     depends_on:
       - redis-evaluate
     command: flask run --host=0.0.0.0 --port=8001 --debugger --reload
@@ -34,7 +34,7 @@ services:
     env_file:
       - .env
     environment:
-      APP_REDIS_HOST: "redis-evaluate"
+      REDIS_HOST: "redis-evaluate"
     depends_on:
       - redis-evaluate
 
