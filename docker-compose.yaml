@@ -15,11 +15,10 @@ services:
     environment:
       ARGS_APP_DIR: "."
       ARGS_FLASK_NAME: "app:app"
-      FLASK_ENV: "development"
       FLASK_DEBUG: 1
       GUNICORN_WORKER: 3
       GUNICORN_TIMEOUT: 30
-      REDIS_HOST: "redis-evaluate"
+      APP_REDIS_HOST: "redis-evaluate"
     depends_on:
       - redis-evaluate
     command: flask run --host=0.0.0.0 --port=8001 --debugger --reload
