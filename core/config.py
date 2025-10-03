@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "secret-key"
 
     model_config = SettingsConfigDict(
+        extra="ignore",
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False
