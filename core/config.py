@@ -12,12 +12,11 @@ class Settings(BaseSettings):
 
     DEBUG: bool = Field(False, alias=AliasChoices("APP_DEBUG", "APP_APP_DEBUG"))
 
-    GOOGLE_API_KEY: str = Field(..., alias=AliasChoices("GOOGLE_API_KEY", "APP_GOOGLE_API_KEY"))
-
-    DATABASE_URL: str = Field("sqlite:///./storage/app.db", alias=AliasChoices("DATABASE_URL", "APP_DATABASE_URL"))
-
+    GOOGLE_API_KEY: str = Field("", alias=AliasChoices("GOOGLE_API_KEY", "APP_GOOGLE_API_KEY"))
     GOOGLE_LLM_MODEL: str = Field("gemini-2.5-flash-lite", alias=AliasChoices("GOOGLE_LLM_MODEL", "APP_GOOGLE_LLM_MODEL"))
     GOOGLE_EMBEDDING_MODEL: str = Field("models/text-embedding-004", alias=AliasChoices("GOOGLE_EMBEDDING_MODEL", "APP_GOOGLE_EMBEDDING_MODEL"))
+
+    DATABASE_URL: str = Field("sqlite:///./storage/app.db", alias=AliasChoices("DATABASE_URL", "APP_DATABASE_URL"))
 
 
     REDIS_HOST: str = Field("localhost", alias=AliasChoices("REDIS_HOST", "APP_REDIS_HOST"))
