@@ -37,6 +37,7 @@ services:
     environment:
       APP_REDIS_HOST: "redis-evaluate"
       APP_GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
+      GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
     depends_on:
       - redis-evaluate
 

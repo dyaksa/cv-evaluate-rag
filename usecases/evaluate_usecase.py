@@ -104,6 +104,10 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
 
         job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
 
+        if not settings.GOOGLE_API_KEY:
+            print("GOOGLE_API_KEY is not set in environment variables")
+            raise ValueError("GOOGLE_API_KEY is not set in environment variables")
+
         prompt_template = PromptTemplate.from_template(EVAL_PROMPT)
         model = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
         evaluation_chain = (
