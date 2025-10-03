@@ -1,10 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from pydantic import Field, AliasChoices
+from dotenv import load_dotenv
 
+
+load_dotenv() 
 
 class Settings(BaseSettings):
-
     """Application settings loaded from environment variables or a .env file."""
     APP_NAME: str = Field("Rakamin Test", alias=AliasChoices("APP_NAME", "APP_APP_NAME"))
     APP_VERSION: str = Field("0.1.0", alias=AliasChoices("APP_VERSION", "APP_APP_VERSION"))
