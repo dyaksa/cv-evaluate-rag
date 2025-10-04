@@ -13,16 +13,33 @@ services:
     env_file:
       - .env
     environment:
-      ARGS_APP_DIR: "."
-      ARGS_FLASK_NAME: "app:app"
-      FLASK_DEBUG: 1
-      GUNICORN_WORKER: 3
-      GUNICORN_TIMEOUT: 30
       APP_REDIS_HOST: "redis-evaluate"
       APP_GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
+      PYTHONUNBUFFERED: "1"
     depends_on:
       - redis-evaluate
-    command: flask run --host=0.0.0.0 --port=8001 --debugger --reload
+    command: [
+        "gunicorn",
+        "app:app", # atau "app.main:create_app()"
+        "-w",
+        "2",
+        "--threads",
+        "4",
+        "--worker-class",
+        "gthread", # stabil untuk I/O heavy; bisa ganti default
+        "--bind",
+        "0.0.0.0:8001",
+        "--timeout",
+        "60",
+        "--graceful-timeout",
+        "30",
+        "--keep-alive",
+        "5",
+        "--max-requests",
+        "1000",
+        "--max-requests-jitter",
+        "100",
+      ]
 
   worker:
     container_name: "worker-evaluate"
