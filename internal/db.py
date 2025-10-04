@@ -3,18 +3,13 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from core.config import settings
 from sqlalchemy import event
 from rag.embbedings import from_blob
-from sqlalchemy.pool import NullPool
 import numpy as np
+from sqlalchemy import event
 
 engine = create_engine(
     settings.DATABASE_URL, 
-    poolclass=NullPool,
-    connect_args={
-        "check_same_thread": False,
-        "timeout": 10,
-    },
-    future=True,
-    echo=False,
+    connect_args={"check_same_thread": False, "timeout": 30},
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(
@@ -25,6 +20,13 @@ SessionLocal = sessionmaker(
     future=True,
 )
 Base = declarative_base()
+
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_conn, _):
+    cur = dbapi_conn.cursor()
+    cur.execute("PRAGMA journal_mode=WAL;")
+    cur.execute("PRAGMA synchronous=NORMAL;")
+    cur.close()
 
 
 def cosine_sim_blob(a: bytes, b: bytes) -> float:
