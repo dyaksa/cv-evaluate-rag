@@ -1,4 +1,4 @@
-from rag.chains import cv_extract, zhipu_cv_extractor
+from rag.chains import summarize, zhipu_cv_extractor
 from rag.pdf_reader import extract_text_from_pdf
 from repositories import embedding_repository, upload_repository, evaluation_repository
 from langchain.output_parsers.json import SimpleJsonOutputParser
@@ -6,13 +6,11 @@ from langchain.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
 from rag.llm import EVAL_PROMPT
 from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
 from internal.redis import RedisClient
 from datetime import datetime
 from core.config import settings
 from internal.db import SessionLocal
 from model.model import Evaluation, EvaluationStatus
-import time
 import uuid
 import os
 
@@ -98,12 +96,13 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
 
         resume_extract = extract_text_from_pdf(stream)
         resume_summary = zhipu_cv_extractor(resume_extract)
+        job_summary = summarize(job_context)
 
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="resume", text=resume_summary)
-        embedding_repo.upsert_document_end_embedding(title=title, doc_type="job", text=job_context)
+        embedding_repo.upsert_document_end_embedding(title=title, doc_type="job", text=job_summary)
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="rubric", text=rubric_context)
 
-        job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=5)
+        job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
 
         prompt_template = PromptTemplate.from_template(EVAL_PROMPT)
 

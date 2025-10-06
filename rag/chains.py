@@ -24,6 +24,28 @@ def zhipu_embed_texts(texts: list[str]) -> list[list[float]]:
         return embed.embed_documents(texts)
     except Exception as e:
         raise Exception(f"Invalid error from model embedding: {e}\n")
+    
+def summarize(text: str) -> str:
+    llm = ChatOpenAI(
+        api_key=settings.OPENROUTER_API_KEY,
+        base_url=settings.OPENROUTER_BASE_URL_MODEL,
+        model=settings.OPENROUTER_LLM_MODEL,
+        temperature=0.2,
+        max_retries=3
+    )
+
+    prompt = f"""You are an HR tech expert in summarizing, 
+    please help me summarize the following job description with a focus on skills, 
+    key experience (with years), tools, and project highlights."""
+
+    msgs = [SystemMessage(content=prompt),
+            HumanMessage(content=text)]
+    try:
+        out = llm.invoke(msgs)
+    except Exception as e:
+        raise Exception(f"Invalid error from model summary: {e}\n")
+    
+    return out.content
 
 @backoff.on_exception(backoff.expo, (ResourceExhausted, DeadlineExceeded), max_tries=3)
 def zhipu_cv_extractor(cv_text: str) -> str:
@@ -35,7 +57,7 @@ def zhipu_cv_extractor(cv_text: str) -> str:
         max_retries=3
     )
 
-    prompt = f"""Play the role of an Expert HR-tech summarizer. Summarize the following resume in <=1000 words
+    prompt = f"""Play the role of an Expert HR-tech summarizer. Summarize the following resume 
     focusing on skills, key experience (with years), tools, and project highlights."""
     
     msgs = [SystemMessage(content=prompt),
