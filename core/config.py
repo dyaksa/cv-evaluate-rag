@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     ZHIPU_EMBEDDING_MODEL: str = Field(os.getenv("APP_ZHIPU_EMBEDDING_MODEL", "embedding-2"), alias=AliasChoices("ZHIPU_EMBEDDING_MODEL", "APP_ZHIPU_EMBEDDING_MODEL"))
     ZHIPU_API_KEY: str = Field(os.getenv("APP_ZHIPU_API_KEY", ""), alias=AliasChoices("ZHIPU_API_KEY", "APP_ZHIPU_API_KEY"))
 
+    MINIO_URL: str = Field(os.getenv("APP_MINIO_URL", "http://localhost:9000"), alias=AliasChoices("MINIO_URL", "APP_MINIO_URL"))
+    MINIO_ACCESS_KEY: str = Field(os.getenv("APP_MINIO_ACCESS_KEY", "minioadmin"), alias=AliasChoices("MINIO_ACCESS_KEY", "APP_MINIO_ACCESS_KEY"))
+    MINIO_SECRET_KEY: str = Field(os.getenv("APP_MINIO_SECRET_KEY", "minioadmin"), alias=AliasChoices("MINIO_SECRET_KEY", "APP_MINIO_SECRET_KEY"))
+    MINIO_BUCKET_NAME: str = Field(os.getenv("APP_MINIO_BUCKET_NAME", "my-bucket"), alias=AliasChoices("MINIO_BUCKET_NAME", "APP_MINIO_BUCKET_NAME"))
+
     model_config = SettingsConfigDict(
         extra="ignore",
         env_file=".env",
