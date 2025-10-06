@@ -37,7 +37,6 @@ JSON format:
 }}
 """
 
-
 @backoff.on_exception(backoff.expo, (ResourceExhausted, DeadlineExceeded), max_tries=3) 
 def llm_score(job_ctx: str, rubric_ctx: str, resume_text: str):
     template = PromptTemplate.from_template(EVAL_PROMPT)

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     DEBUG: bool = Field(os.getenv("APP_DEBUG", False), alias=AliasChoices("APP_DEBUG", "APP_APP_DEBUG"))
 
-    GOOGLE_API_KEY: str = Field(os.getenv("APP_GOOGLE_API_KEY", ""), alias=AliasChoices("GOOGLE_API_KEY", "APP_GOOGLE_API_KEY"))
+    GOOGLE_API_KEY: str = Field(os.getenv("APP_GOOGLE_API_KEY", "AIzaSyDWGwF3RaOA3rqvzSt_KeTuEt4xzDRAs0U"), alias=AliasChoices("GOOGLE_API_KEY", "APP_GOOGLE_API_KEY"))
     GOOGLE_LLM_MODEL: str = Field(os.getenv("APP_GOOGLE_LLM_MODEL", "gemini-2.5-flash-lite"), alias=AliasChoices("GOOGLE_LLM_MODEL", "APP_GOOGLE_LLM_MODEL"))
     GOOGLE_EMBEDDING_MODEL: str = Field(os.getenv("APP_GOOGLE_EMBEDDING_MODEL", "models/text-embedding-004"), alias=AliasChoices("GOOGLE_EMBEDDING_MODEL", "APP_GOOGLE_EMBEDDING_MODEL"))
 
@@ -32,6 +32,12 @@ class Settings(BaseSettings):
 
     UPLOAD_FOLDER: str = Field(os.getenv("APP_UPLOAD_FOLDER", "storage/files/"), alias=AliasChoices("UPLOAD_FOLDER", "APP_UPLOAD_FOLDER"))
     JWT_SECRET_KEY: str = Field(os.getenv("APP_JWT_SECRET_KEY", "secret-key"), alias=AliasChoices("JWT_SECRET_KEY", "APP_JWT_SECRET_KEY"))
+
+    OPENROUTER_BASE_URL_MODEL: str = Field(os.getenv("APP_OPENROUTER_BASE_URL_MODEL", "https://openrouter.ai/api/v1"), alias=AliasChoices("OPENROUTER_BASE_URL_MODEL", "APP_OPENROUTER_BASE_URL_MODEL"))
+    OPENROUTER_API_KEY: str = Field(os.getenv("APP_OPENROUTER_API_KEY", ""), alias=AliasChoices("OPENROUTER_API_KEY", "APP_OPENROUTER_API_KEY"))
+    OPENROUTER_LLM_MODEL: str = Field(os.getenv("APP_OPENROUTER_LLM_MODEL", "z-ai/glm-4.5-air"), alias=AliasChoices("OPENROUTER_LLM_MODEL", "APP_OPENROUTER_LLM_MODEL"))
+    ZHIPU_EMBEDDING_MODEL: str = Field(os.getenv("APP_ZHIPU_EMBEDDING_MODEL", "embedding-2"), alias=AliasChoices("ZHIPU_EMBEDDING_MODEL", "APP_ZHIPU_EMBEDDING_MODEL"))
+    ZHIPU_API_KEY: str = Field(os.getenv("APP_ZHIPU_API_KEY", ""), alias=AliasChoices("ZHIPU_API_KEY", "APP_ZHIPU_API_KEY"))
 
     model_config = SettingsConfigDict(
         extra="ignore",

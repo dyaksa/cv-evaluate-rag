@@ -3,12 +3,15 @@ gunicorn
 python-dotenv
 pymysql
 google-generativeai
+langchain_community
+zhipuai
 tiktoken
 pydantic-settings
 pypdf
 langchain 
 langchain-core 
 langchain-google-genai 
+langchain_openai
 psycopg2-binary
 werkzeug
 blinker

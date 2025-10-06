@@ -1,10 +1,11 @@
-from rag.chains import cv_extract
+from rag.chains import cv_extract, zhipu_cv_extractor
 from rag.pdf_reader import extract_text_from_pdf
 from repositories import embedding_repository, upload_repository, evaluation_repository
 from langchain.output_parsers.json import SimpleJsonOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
-from rag.llm import llm_score, EVAL_PROMPT
+from rag.llm import EVAL_PROMPT
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from internal.redis import RedisClient
 from datetime import datetime
@@ -96,20 +97,24 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
         embedding_repo = embedding_repository.EmbeddingRepository()
 
         resume_extract = extract_text_from_pdf(stream)
-        resume_summary = cv_extract(resume_extract)
+        resume_summary = zhipu_cv_extractor(resume_extract)
 
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="resume", text=resume_summary)
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="job", text=job_context)
         embedding_repo.upsert_document_end_embedding(title=title, doc_type="rubric", text=rubric_context)
 
-        job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
-
-        if not settings.GOOGLE_API_KEY:
-            print("GOOGLE_API_KEY is not set in environment variables")
-            raise ValueError("GOOGLE_API_KEY is not set in environment variables")
+        job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=5)
 
         prompt_template = PromptTemplate.from_template(EVAL_PROMPT)
-        model = ChatGoogleGenerativeAI(model=settings.GOOGLE_LLM_MODEL, temperature=0.2, google_api_key=settings.GOOGLE_API_KEY)
+
+        model = ChatOpenAI(
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url=settings.OPENROUTER_BASE_URL_MODEL,
+            model=settings.OPENROUTER_LLM_MODEL,
+            temperature=0.2,
+            max_retries=3
+        )
+
         evaluation_chain = (
             RunnableLambda(lambda x: prompt_template.format_prompt(**x).to_string())  
             | model 
@@ -117,8 +122,8 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
         )
 
         llm_result = evaluation_chain.invoke({
-            "job_ctx": embedding_repo.top_k_similiar(resume_summary, top_k=4, where_kind="job"),
-            "rubric_ctx": embedding_repo.top_k_similiar(resume_summary, top_k=4, where_kind="rubric"),
+            "job_ctx": job_context,
+            "rubric_ctx": rubric_context,
             "resume_text": resume_summary
         })
 
@@ -129,8 +134,6 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
 
         evaluation_repo = evaluation_repository.EvaluationRepository(SessionLocal())
         evaluation = evaluation_repo.update_status(evaluate_id, EvaluationStatus.processing)
-
-        time.sleep(5)
 
         evaluation_repo = evaluation_repository.EvaluationRepository(SessionLocal())
         evaluation = evaluation_repo.fill_results(

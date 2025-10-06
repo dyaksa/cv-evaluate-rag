@@ -14,7 +14,6 @@ services:
       - .env
     environment:
       APP_REDIS_HOST: "redis-evaluate"
-      APP_GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
       PYTHONUNBUFFERED: "1"
     depends_on:
       - redis-evaluate
@@ -55,6 +54,11 @@ services:
       APP_REDIS_HOST: "redis-evaluate"
       APP_GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
       GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
+      OPENROUTER_BASE_URL_MODEL: "${APP_OPENROUTER_BASE_URL_MODEL}"
+      OPENROUTER_API_KEY: "${APP_OPENROUTER_API_KEY}"
+      OPENROUTER_LLM_MODEL: "${APP_OPENROUTER_LLM_MODEL}"
+      ZHIPU_EMBEDDING_MODEL: "${APP_ZHIPU_EMBEDDING_MODEL}"
+      ZHIPU_API_KEY: "${APP_ZHIPU_API_KEY}"
     depends_on:
       - redis-evaluate
 
