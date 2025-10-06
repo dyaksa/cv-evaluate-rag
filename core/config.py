@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     DEBUG: bool = Field(os.getenv("APP_DEBUG", False), alias=AliasChoices("APP_DEBUG", "APP_APP_DEBUG"))
 
-    GOOGLE_API_KEY: str = Field(os.getenv("APP_GOOGLE_API_KEY", "AIzaSyDWGwF3RaOA3rqvzSt_KeTuEt4xzDRAs0U"), alias=AliasChoices("GOOGLE_API_KEY", "APP_GOOGLE_API_KEY"))
+    GOOGLE_API_KEY: str = Field(os.getenv("APP_GOOGLE_API_KEY", ""), alias=AliasChoices("GOOGLE_API_KEY", "APP_GOOGLE_API_KEY"))
     GOOGLE_LLM_MODEL: str = Field(os.getenv("APP_GOOGLE_LLM_MODEL", "gemini-2.5-flash-lite"), alias=AliasChoices("GOOGLE_LLM_MODEL", "APP_GOOGLE_LLM_MODEL"))
     GOOGLE_EMBEDDING_MODEL: str = Field(os.getenv("APP_GOOGLE_EMBEDDING_MODEL", "models/text-embedding-004"), alias=AliasChoices("GOOGLE_EMBEDDING_MODEL", "APP_GOOGLE_EMBEDDING_MODEL"))
 
