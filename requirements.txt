@@ -5,6 +5,7 @@ pymysql
 google-generativeai
 langchain_community
 zhipuai
+minio
 tiktoken
 pydantic-settings
 pypdf

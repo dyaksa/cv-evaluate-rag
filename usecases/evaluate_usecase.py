@@ -11,6 +11,8 @@ from datetime import datetime
 from core.config import settings
 from internal.db import SessionLocal
 from model.model import Evaluation, EvaluationStatus
+from pkg.minio import MinioClient
+import tempfile
 import uuid
 import os
 
@@ -19,15 +21,18 @@ os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
 
 def upload(title: str, stream: bytes, job_context: str, rubric_context: str) -> str:
     filename = title.replace(' ', '_') + datetime.now().strftime("-%Y%m%d-%H%M%S") + '.pdf'
+    minio_client = MinioClient()
 
-    save_path = os.path.join(settings.UPLOAD_FOLDER, filename)
-    with open(save_path, 'wb') as f:
-        f.write(stream.read())
+    with tempfile.NamedTemporaryFile(delete=True, prefix="pre_", suffix=".pdf", dir=settings.UPLOAD_FOLDER) as temp_file:
+        temp_file.write(stream.read())
+        save_path = temp_file.name
+        object_name = f"cv-evaluation-service/resume/{filename}"
+        minio_client.upload_file(save_path, object_name)
 
     upload_repo = upload_repository.UploadRepository()
     upload = upload_repo.create(
         title=title,
-        file_path=save_path,
+        file_path=object_name,
         job_context=job_context,
         rubric_context=rubric_context
     )
@@ -78,11 +83,17 @@ def evaluate_async_cv(message_id: str, payload: dict):
         rubric_context = payload.get("rubric_context", "")
         evaluate_id = payload.get("evaluate_id", "")
 
+        minio_client = MinioClient()
+
         if evaluate_id == "":
             raise ValueError("Missing evaluate_id in payload")
-
-        with open(file_path, 'rb') as f:
-            result = _evaluate_cv(evaluate_id, title, f, job_context, rubric_context)
+        
+        with tempfile.NamedTemporaryFile(delete=True, prefix="pre_", suffix=".pdf", dir=settings.UPLOAD_FOLDER) as temp_file:
+            download_success = minio_client.download_file(file_path, temp_file.name)
+            if not download_success:
+                raise ValueError(f"Failed to download file from MinIO: {file_path}")
+            with open(temp_file.name, 'rb') as f:
+                _evaluate_cv(evaluate_id, title, f, job_context, rubric_context)
         
         return True
     except Exception as e:
