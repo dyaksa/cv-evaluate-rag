@@ -56,5 +56,4 @@ services:
       ZHIPU_EMBEDDING_MODEL: "${APP_ZHIPU_EMBEDDING_MODEL}"
       ZHIPU_API_KEY: "${APP_ZHIPU_API_KEY}"
 volumes:
-  redis_data: {}
   app_data: {}
