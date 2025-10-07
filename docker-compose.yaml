@@ -29,7 +29,7 @@ services:
         "--bind",
         "0.0.0.0:8001",
         "--timeout",
-        "60",
+        "90",
         "--graceful-timeout",
         "30",
         "--keep-alive",
