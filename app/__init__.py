@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from internal.celery import celery
+from app.tasks.celery import celery
 from app.controller import evaluation_bp, auth_bp
 from flask_jwt_extended import JWTManager
 from core.config import settings
