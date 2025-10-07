@@ -4,6 +4,7 @@ python-dotenv
 pymysql
 google-generativeai
 langchain_community
+celery
 zhipuai
 minio
 tiktoken

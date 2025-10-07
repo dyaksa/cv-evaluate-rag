@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     DB_POOL_MAX: int = Field(os.getenv("APP_DB_POOL_MAX", 10), alias=AliasChoices("DB_POOL_MAX", "APP_DB_POOL_MAX"))
     DB_POOL_TIMEOUT: int = Field(os.getenv("APP_DB_POOL_TIMEOUT", 30), alias=AliasChoices("DB_POOL_TIMEOUT", "APP_DB_POOL_TIMEOUT"))
 
+    CELERY_BROKER_URL: str = Field(os.getenv("APP_CELERY_BROKER_URL", "redis://localhost:6379/0"), alias=AliasChoices("CELERY_BROKER_URL", "APP_CELERY_BROKER_URL"))
+
     REDIS_HOST: str = Field(os.getenv("APP_REDIS_HOST", "localhost"), alias=AliasChoices("REDIS_HOST", "APP_REDIS_HOST"))
     REDIS_PORT: int = Field(os.getenv("APP_REDIS_PORT", 6379), alias=AliasChoices("REDIS_PORT", "APP_REDIS_PORT"))
     REDIS_PASSWORD: str = Field(os.getenv("APP_REDIS_PASSWORD", ""), alias=AliasChoices("REDIS_PASSWORD", "APP_REDIS_PASSWORD"))

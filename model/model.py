@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey, Float, LargeBinary, Integer, Uuid
 from sqlalchemy.sql import func
 from internal.db import Base
+from pydantic import BaseModel, Field
 import enum
 
 
@@ -58,3 +59,10 @@ class Upload(Base):
     job_context = Column(Text, nullable=False)
     rubric_context = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class EvaluationResponse(BaseModel):
+    cv_match_rate: float = Field(0.0, description="The match rate of the CV against the job description.")
+    cv_feedback: str = Field(..., description="Feedback on the CV content.")
+    project_score: float = Field(0.0, description="Score for the projects listed in the CV.")
+    overall_summary: str = Field(..., description="Overall summary of the CV evaluation.")

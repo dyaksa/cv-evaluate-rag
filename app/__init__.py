@@ -1,18 +1,15 @@
 from flask import Flask, jsonify
+from internal.celery import celery
 from app.controller import evaluation_bp, auth_bp
-from internal.redis import RedisClient
 from flask_jwt_extended import JWTManager
 from core.config import settings
-
-
-
-redis_client = RedisClient()
-jwt = JWTManager()
 
 app = Flask(__name__)
 
 app.config.update({'MAX_CONTENT_LENGTH': 16 * 1024 * 1024})  # 16 MB limit
-    
+celery = celery
+
+jwt = JWTManager()
 jwt.init_app(app)
 
 app.config['JWT_SECRET_KEY'] = settings.JWT_SECRET_KEY

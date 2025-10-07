@@ -13,10 +13,7 @@ services:
     env_file:
       - .env
     environment:
-      APP_REDIS_HOST: "redis-evaluate"
       PYTHONUNBUFFERED: "1"
-    depends_on:
-      - redis-evaluate
     command: [
         "gunicorn",
         "app:app", # atau "app.main:create_app()"
@@ -45,13 +42,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["python", "-u", "worker.py"]
+    command: ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
     volumes:
       - .:/usr/src/app
     env_file:
       - .env
     environment:
-      APP_REDIS_HOST: "redis-evaluate"
       APP_GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
       GOOGLE_API_KEY: "${APP_GOOGLE_API_KEY}"
       OPENROUTER_BASE_URL_MODEL: "${APP_OPENROUTER_BASE_URL_MODEL}"
@@ -59,18 +55,6 @@ services:
       OPENROUTER_LLM_MODEL: "${APP_OPENROUTER_LLM_MODEL}"
       ZHIPU_EMBEDDING_MODEL: "${APP_ZHIPU_EMBEDDING_MODEL}"
       ZHIPU_API_KEY: "${APP_ZHIPU_API_KEY}"
-    depends_on:
-      - redis-evaluate
-
-  redis-evaluate:
-    image: "redis:latest"
-    container_name: "redis-evaluate"
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: ["redis-server", "--appendonly", "yes"]
-
 volumes:
   redis_data: {}
   app_data: {}
