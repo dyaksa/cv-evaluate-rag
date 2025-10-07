@@ -8,10 +8,22 @@ class UserRepository:
         self.session = session
 
     def create(self, email: str, password: str) -> Optional[User]:
-        user = User(id=str(uuid.uuid4()), email=email, password=password)
-        self.session.add(user)
-        self.session.commit()
-        return user
-    
+        try:
+            user = User(id=str(uuid.uuid4()), email=email, password=password)
+            self.session.add(user)
+            self.session.commit()
+            return user
+        except Exception as e:
+            self.session.rollback()
+            raise e
+        finally:
+            self.session.close()
+
     def find_by_email(self, email: str) -> Optional[User]:
-        return self.session.query(User).filter(User.email == email).first()
+        try:
+            return self.session.query(User).filter(User.email == email).first()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+        finally:
+            self.session.close()
