@@ -1,13 +1,8 @@
 from flask import Flask, jsonify
 from app.controller import evaluation_bp, auth_bp
-from internal.db import Base, engine
-from model.model import Document, Embedding, Evaluation, Upload
 from internal.redis import RedisClient
-from usecases.evaluate_usecase import evaluate_async_cv
-from threading import Thread
 from flask_jwt_extended import JWTManager
 from core.config import settings
-import time
 
 
 
@@ -19,7 +14,6 @@ app = Flask(__name__)
 app.config.update({'MAX_CONTENT_LENGTH': 16 * 1024 * 1024})  # 16 MB limit
     
 jwt.init_app(app)
-Base.metadata.create_all(bind=engine)
 
 app.config['JWT_SECRET_KEY'] = settings.JWT_SECRET_KEY
 app.register_blueprint(auth_bp, url_prefix="/auth")

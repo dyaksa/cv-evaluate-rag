@@ -1,10 +1,11 @@
 from rag.chains import summarize, zhipu_cv_extractor
 from rag.pdf_reader import extract_text_from_pdf
 from repositories import embedding_repository, upload_repository, evaluation_repository
-from langchain.output_parsers.json import SimpleJsonOutputParser
+from langchain_core.output_parsers import JsonOutputParser
 from langchain.prompts import PromptTemplate
 from langchain_core.runnables import RunnableLambda
 from rag.llm import EVAL_PROMPT
+from re import sub
 from langchain_openai import ChatOpenAI
 from internal.redis import RedisClient
 from datetime import datetime
@@ -12,12 +13,20 @@ from core.config import settings
 from internal.db import SessionLocal
 from model.model import Evaluation, EvaluationStatus
 from pkg.minio import MinioClient
+from pydantic import BaseModel, Field
+import json
 import tempfile
 import uuid
 import os
 
 redis_client = RedisClient()
 os.makedirs(settings.UPLOAD_FOLDER, exist_ok=True)
+
+class EvaluationResponse(BaseModel):
+    cv_match_rate: float = Field(0.0, description="The match rate of the CV against the job description.")
+    cv_feedback: str = Field(..., description="Feedback on the CV content.")
+    project_score: float = Field(0.0, description="Score for the projects listed in the CV.")
+    overall_summary: str = Field(..., description="Overall summary of the CV evaluation.")
 
 def upload(title: str, stream: bytes, job_context: str, rubric_context: str) -> str:
     filename = title.replace(' ', '_') + datetime.now().strftime("-%Y%m%d-%H%M%S") + '.pdf'
@@ -61,7 +70,7 @@ def evaluate(id: str):
         return {"error": "Upload not found"}
     
     payload = {
-        "evaluate_id": exist_eval.id,
+        "evaluate_id": str(exist_eval.id),
         "title": exist_upload.title,
         "file_path": exist_upload.file_path,
         "job_context": exist_upload.job_context,
@@ -109,11 +118,12 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
         resume_summary = zhipu_cv_extractor(resume_extract)
         job_summary = summarize(job_context)
 
-        embedding_repo.upsert_document_end_embedding(title=title, doc_type="resume", text=resume_summary)
-        embedding_repo.upsert_document_end_embedding(title=title, doc_type="job", text=job_summary)
-        embedding_repo.upsert_document_end_embedding(title=title, doc_type="rubric", text=rubric_context)
 
-        job_context, rubric_context = embedding_repo.build_context(resume_summary, top_k=4)
+        _ = embedding_repo.insert_chroma_embedding(title=title, doc_type="resume", text=resume_summary)
+        _ = embedding_repo.insert_chroma_embedding(title=title, doc_type="job", text=job_summary)
+        _ = embedding_repo.insert_chroma_embedding(title=title, doc_type="rubric", text=rubric_context)
+
+        job_context, rubric_context = embedding_repo.build_context_chroma(resume_summary, top_k=4)
 
         prompt_template = PromptTemplate.from_template(EVAL_PROMPT)
 
@@ -125,10 +135,11 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
             max_retries=3
         )
 
+        json_parser = JsonOutputParser(pydantic_object=EvaluationResponse)
         evaluation_chain = (
             RunnableLambda(lambda x: prompt_template.format_prompt(**x).to_string())  
             | model 
-            | SimpleJsonOutputParser()
+            | json_parser
         )
 
         llm_result = evaluation_chain.invoke({
@@ -136,6 +147,11 @@ def _evaluate_cv(evaluate_id: str, title: str, stream: bytes, job_context: str, 
             "rubric_ctx": rubric_context,
             "resume_text": resume_summary
         })
+
+        if type(llm_result) is str:
+            cleanup = sub(r"```[a-zA-Z]*", "", llm_result).strip()
+            llm_result = json.loads(cleanup)
+
 
         cv_match_rate = float(llm_result.get("cv_match_rate", 0.0))
         cv_feedback = str(llm_result.get("cv_feedback", ""))

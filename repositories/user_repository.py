@@ -8,7 +8,7 @@ class UserRepository:
         self.session = session
 
     def create(self, email: str, password: str) -> Optional[User]:
-        user = User(id=str(uuid.uuid4()),email=email, password=password)
+        user = User(id=str(uuid.uuid4()), email=email, password=password)
         self.session.add(user)
         self.session.commit()
         return user

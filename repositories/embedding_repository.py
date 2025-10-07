@@ -8,13 +8,27 @@ from core.config import settings
 from datetime import datetime
 from sqlalchemy import select
 from google.api_core.exceptions import ResourceExhausted, DeadlineExceeded
+from internal.chroma import ChromaClient
 import backoff
 import numpy as np
 import uuid
 
 class EmbeddingRepository:
     def __init__(self):
-        self.emb = GoogleGenerativeAIEmbeddings(model=settings.GOOGLE_EMBEDDING_MODEL, api_key=settings.GOOGLE_API_KEY)
+        self.emb = GoogleGenerativeAIEmbeddings(model=settings.GOOGLE_EMBEDDING_MODEL, google_api_key=settings.GOOGLE_API_KEY)
+        self.chroma_client = ChromaClient()
+
+    def insert_chroma_embedding(self, title: str, doc_type: str, text: str):
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=200,
+            chunk_overlap=20,
+            separators=["\n\n", "\n", " ", ""]
+        )
+
+        chunks = splitter.split_text(text)
+        metadatas = [{"title": title, "doc_type": doc_type} for _ in chunks]
+        ids = self.chroma_client.add_texts(chunks, metadatas)
+        return ids
 
     def upsert_document_end_embedding(self, title: str, doc_type: str, text: str):
         splitter = RecursiveCharacterTextSplitter(
@@ -57,6 +71,14 @@ class EmbeddingRepository:
 
         job_ctx = "\n\n---\n".join([d.content for _, d in top_job])
         rubric_ctx = "\n\n---\n".join([d.content for _, d in top_rubric])
+        return job_ctx, rubric_ctx
+    
+    def build_context_chroma(self, resume_text: str, top_k: int = 4):
+        top_job = self.chroma_client.query(resume_text, top_k=top_k, doc_type="job")
+        top_rubric = self.chroma_client.query(resume_text, top_k=top_k, doc_type="rubric")
+
+        job_ctx = "\n\n---\n".join([d.page_content for d, _ in top_job])
+        rubric_ctx = "\n\n---\n".join([d.page_content for d, _ in top_rubric])
         return job_ctx, rubric_ctx
     
     def top_k_similiar(self, query: str, top_k: int = 4, where_kind: str = None):

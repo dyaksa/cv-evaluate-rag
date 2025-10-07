@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from model.model import Evaluation, EvaluationStatus
 from typing import Optional
+import uuid
 
 class EvaluationRepository:
     def __init__(self, session: Session):
@@ -12,10 +13,10 @@ class EvaluationRepository:
         self.session.refresh(evaluation)
         return evaluation
 
-    def get_by_id(self, evaluation_id: int) -> Optional[Evaluation]:
+    def get_by_id(self, evaluation_id: str) -> Optional[Evaluation]:
         return self.session.query(Evaluation).filter(Evaluation.id == evaluation_id).first()
 
-    def update_status(self, evaluation_id: int, status: EvaluationStatus) -> Optional[Evaluation]:
+    def update_status(self, evaluation_id: str, status: EvaluationStatus) -> Optional[Evaluation]:
         evaluation = self.get_by_id(evaluation_id)
         if evaluation:
             evaluation.status = status
