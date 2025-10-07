@@ -12,7 +12,7 @@ from rag.llm import EVAL_PROMPT
 from re import sub
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import JsonOutputParser
-from app.tasks.celery import celery
+from app.celery import celery
 import json
 import tempfile
 
