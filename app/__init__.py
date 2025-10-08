@@ -2,7 +2,6 @@ from flask import Flask, jsonify
 from app.controller import evaluation_bp, auth_bp
 from flask_jwt_extended import JWTManager
 from core.config import settings
-from app.celery import celery
 
 app = Flask(__name__)
 
